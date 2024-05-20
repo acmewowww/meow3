@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<head>
+    <script src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'></script>
+</head>
+<body>
+<center>
+    <!-- video tag is used in receiving stream which captured by camera. -->
+    <input id="selectfile" type="file">
+    <img width="320" id="monitor" src="">
+    <table border="2" style="width: 300px">
+        <tbody>
+            <tr>
+                <td style="width: 150px">Name</td>
+                <td style="width:150px" id="name"></td>
+            </tr>
+            <tr>
+                <td>Student Number</td>
+                <td id="number"></td>
+            </tr>
+            <tr>
+                <td>Address</td>
+                <td id="address"></td>
+            </tr>
+            <tr>
+                <td>Sex</td>
+                <td id="sex"></td>
+            </tr>
+        </tbody>
+    </table>
+</center>
+    <script>
+        var ocr = {
+            recognizer : null
+        }
+        // create worker for ocr
+        Tesseract.createWorker("eng").then(r => ocr.recognizer = r)
+
+        document.getElementById('selectfile').addEventListener('change', (e) => {
+            if (e.target.files.length == 0) {
+                return;
+            }
+            file = e.target.files[0]
+            let reader = new FileReader()
+            reader.addEventListener('load', (result) => {
+                document.getElementById('monitor').setAttribute('src', result.currentTarget.result)
+                if (ocr.recognizer) {
+                    ocr.recognizer.recognize(result.currentTarget.result).then(({ data : { text }}) => {
+                        // console.log( text )
+                        textprocess(text)
+                    })
+                }
+            })
+            reader.readAsDataURL(file)
+        })
+
+        const textprocess = (text) => {
+            console.log(text)
+            var re = /^Stamford College\sName\sStudent\sNumber\s(.+?)(?=[A|B]\d{7})([A|B]\d{7})\sAddress\sSex\s(.+?)(?=[F|M])([F|M])\s(.+)$/
+            var matched = re.exec(text.trim())
+            console.log(matched)
+            document.getElementById('name').innerHTML = matched[1].trim();
+            document.getElementById('number').innerHTML = matched[2].trim();
+            document.getElementById('address').innerHTML = (matched[3] + matched[5]).trim();
+            document.getElementById('sex').innerHTML = matched[4].trim();
+        }
+        </script>
+</body>
